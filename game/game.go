@@ -26,6 +26,8 @@ type game struct {
 	drawableCount int
 
 	cleanButton, feedButton *drawable.Button
+	poos                    []*drawable.Poo
+	foods                   []*drawable.Food
 }
 
 func (g *game) Update() error {
@@ -37,7 +39,10 @@ func (g *game) Update() error {
 	g.feedButton.CheckClick()
 
 	if g.cleanButton.JustDown {
-		g.client.Send(clientbuffer.CleanBuffer())
+		if len(g.poos) > 0 {
+			log.Println(g.poos[0].ID)
+			g.client.Send(clientbuffer.CleanBuffer(g.poos[0].ID))
+		}
 	}
 
 	if g.feedButton.JustDown {
@@ -67,6 +72,16 @@ func (g *game) addDrawable(d drawable.Drawable) {
 	g.drawableCount++
 }
 
+func (g *game) removeDrawable(d drawable.Drawable) {
+	for i, element := range g.drawables {
+		if element == d {
+			g.drawables = append(g.drawables[:i], g.drawables[i+1:]...)
+			g.drawableCount--
+			return
+		}
+	}
+}
+
 func StartGame() {
 	c := client.Connect()
 
@@ -80,22 +95,48 @@ func StartGame() {
 		drawableCount: 0,
 		cleanButton:   cleanButton,
 		feedButton:    feedButton,
+		poos:          []*drawable.Poo{},
+		foods:         []*drawable.Food{},
 	}
+
+	c.AddListener(events.CleanPoo, func(buffer []byte) {
+		id := util.DecodeU32(buffer)
+		for _, poo := range g.poos {
+			if poo.ID == id {
+				g.removeDrawable(poo)
+				return
+			}
+		}
+	})
+
+	c.AddListener(events.CharacterEat, func(buffer []byte) {
+		id := util.DecodeU32(buffer)
+		for _, food := range g.foods {
+			if food.ID == id {
+				g.removeDrawable(food)
+				return
+			}
+		}
+	})
 
 	c.AddListener(events.AddFood, func(buffer []byte) {
 		food := drawable.NewFood(
-			util.DecodeI16(buffer[0:2]),
-			util.DecodeI16(buffer[2:4]),
+			util.DecodeU32(buffer[0:4]),
+			util.DecodeI16(buffer[4:6]),
+			util.DecodeI16(buffer[6:8]),
 		)
 		g.addDrawable(food)
+		g.foods = append(g.foods, food)
 	})
 
 	c.AddListener(events.AddPoo, func(buffer []byte) {
 		poo := drawable.NewPoo(
-			util.DecodeI16(buffer[0:2]),
-			util.DecodeI16(buffer[2:4]),
+			util.DecodeU32(buffer[0:4]),
+			util.DecodeI16(buffer[4:6]),
+			util.DecodeI16(buffer[6:8]),
 		)
 		g.addDrawable(poo)
+		g.poos = append(g.poos, poo)
 	})
 
 	c.AddListener(events.CharacterMove, func(buffer []byte) {

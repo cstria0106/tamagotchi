@@ -96,28 +96,30 @@ func (g *Game) eatFood(food *gamestate.Food) {
 }
 
 func (g *Game) addPoo(point gamestate.Point) {
-	g.room.Poos = append(g.room.Poos, &gamestate.Poo{
+	poo := &gamestate.Poo{
 		ID:    g.getNextID(),
 		Point: point,
-	})
+	}
+	g.room.Poos = append(g.room.Poos, poo)
 
-	g.server.sendToAll(serverbuffer.AddPooBuffer(point.X, point.Y))
+	g.server.sendToAll(serverbuffer.AddPooBuffer(poo.ID, point.X, point.Y))
 }
 
 func (g *Game) addFood(point gamestate.Point) {
-	g.room.Foods = append(g.room.Foods, &gamestate.Food{
+	food := &gamestate.Food{
 		ID:    g.getNextID(),
 		Point: point,
-	})
+	}
+	g.room.Foods = append(g.room.Foods, food)
 
-	g.server.sendToAll(serverbuffer.AddFoodBuffer(point.X, point.Y))
+	g.server.sendToAll(serverbuffer.AddFoodBuffer(food.ID, point.X, point.Y))
 }
 
 func (g *Game) clean(id uint32) {
 	removed := false
-	for i, food := range g.room.Foods {
-		if food.ID == id {
-			g.room.Foods = append(g.room.Foods[:i], g.room.Foods[i+1:]...)
+	for i, poo := range g.room.Poos {
+		if poo.ID == id {
+			g.room.Poos = append(g.room.Poos[:i], g.room.Poos[i+1:]...)
 			removed = true
 			break
 		}

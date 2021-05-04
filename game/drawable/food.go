@@ -6,14 +6,15 @@ import (
 )
 
 type Food struct {
+	ID         uint32
 	image      *ebiten.Image
 	x, y, w, h int16
 }
 
-func NewFood(x, y int16) *Food {
+func NewFood(id uint32, x, y int16) *Food {
 	image := ebiten.NewImageFromImage(images.Food)
 	w, h := image.Size()
-	food := Food{image: image, x: x, y: y, w: int16(w), h: int16(h)}
+	food := Food{ID: id, image: image, x: x, y: y, w: int16(w), h: int16(h)}
 	return &food
 }
 
