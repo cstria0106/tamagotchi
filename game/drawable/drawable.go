@@ -1,4 +1,4 @@
-package game
+package drawable
 
 import "github.com/hajimehoshi/ebiten/v2"
 

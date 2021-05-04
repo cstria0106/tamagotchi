@@ -1,4 +1,4 @@
-package game
+package drawable
 
 import (
 	"github.com/Tarliton/collision2d"
@@ -11,15 +11,15 @@ type Button struct {
 	image      *ebiten.Image
 	polygon    collision2d.Polygon
 	x, y, w, h float64
-	Down bool
-	JustDown bool
-	JustUp bool
+	Down       bool
+	JustDown   bool
+	JustUp     bool
 }
 
 func NewButton(image *ebiten.Image, x, y, w, h float64) *Button {
 	imageSizeW, imageSizeH := image.Size()
 
-	collider := collision2d.NewBox(collision2d.Vector{X: x, Y: y}, float64(imageSizeW) * w, float64(imageSizeH) * h)
+	collider := collision2d.NewBox(collision2d.Vector{X: x, Y: y}, float64(imageSizeW)*w, float64(imageSizeH)*h)
 
 	button := Button{
 		image:   image,
@@ -33,7 +33,7 @@ func NewButton(image *ebiten.Image, x, y, w, h float64) *Button {
 	return &button
 }
 
-func NewButtonFromImage(image image.Image, x,y,w,h float64) *Button  {
+func NewButtonFromImage(image image.Image, x, y, w, h float64) *Button {
 	eImage := ebiten.NewImageFromImage(image)
 	return NewButton(eImage, x, y, w, h)
 }
@@ -55,7 +55,6 @@ func (b *Button) CheckClick() {
 
 		return
 	}
-
 
 	if b.Down {
 		b.JustUp = true
