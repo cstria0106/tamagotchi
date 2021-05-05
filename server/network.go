@@ -1,83 +1,106 @@
 package server
 
 import (
+	"fmt"
+	"io"
 	"log"
 	"tamagotchi/network/events"
 	"tamagotchi/network/header"
-	"tamagotchi/util"
 )
 
-func (s *Server) startHandlePackets() {
+func (s *Server) startHandleConnections() {
 	for {
-		s.handlePackets()
-	}
-}
-
-func (s *Server) handlePackets() {
-	buffer := make([]byte, 6)
-
-	_, addr, err := s.connection.ReadFrom(buffer)
-	if err != nil {
-		log.Println(err)
-		return
-	}
-
-	receivedHeader := header.FromBuffer(buffer[0:6])
-
-	if receivedHeader.Length != 0 {
-		buffer = make([]byte, receivedHeader.Length)
-		receivedLength, _, err := s.connection.ReadFrom(buffer)
+		err := s.handleConnection()
 
 		if err != nil {
 			log.Println(err)
-			goto handle
-		}
-
-		if uint32(receivedLength) != receivedHeader.Length {
-			log.Printf("received length(%d) is mismatching with metadata length(%d)\n", receivedLength, receivedHeader.Length)
-			goto handle
 		}
 	}
+}
 
-handle:
-	s.userConnectionsMutex.Lock()
-
-	key := addr.String()
-	if connection, ok := s.userConnections[key]; !ok {
-		connection = &UserConnection{
-			addr,
-			make(chan events.Event, 10),
-		}
-
-		s.userConnections[key] = connection
+func (s *Server) handleConnection() error {
+	conn, err := s.listener.Accept()
+	if err != nil {
+		return err
 	}
 
-	s.userConnections[key].EventChannel <- events.Event{
+	addr := conn.RemoteAddr()
+	connection := s.getConnection(addr)
+
+	if connection == nil {
+		connection = s.addConnectionFromConn(conn)
+	}
+
+	go s.startHandlePackets(connection)
+	go s.startHandleEvents(connection)
+	return nil
+}
+
+func (s *Server) startHandlePackets(connection *Connection) {
+	for {
+		err := s.handlePacket(connection)
+
+		if err != nil {
+			if err == io.EOF {
+				s.removeConnection(connection.Conn.RemoteAddr())
+				break
+			} else {
+				log.Println(err)
+			}
+		}
+	}
+}
+
+func (s *Server) handlePacket(connection *Connection) error {
+	headerBuffer := [6]byte{}
+	_, err := connection.Conn.Read(headerBuffer[:])
+
+	if err != nil {
+		return err
+	}
+
+	receivedHeader := header.FromBuffer(headerBuffer[:])
+
+	if !receivedHeader.Type.ValidatePayloadLength(receivedHeader.Length) {
+		return fmt.Errorf("received metadata length(%d) is not valid for type(%s)",
+			receivedHeader.Length,
+			receivedHeader.Type.String(),
+		)
+	}
+
+	payloadBuffer := make([]byte, receivedHeader.Length)
+	length, err := connection.Conn.Read(payloadBuffer)
+
+	if err != nil {
+		return err
+	}
+
+	if uint32(length) != receivedHeader.Length {
+		return fmt.Errorf("received payload buffer length(%d) is mismatching with metadata length(%d)\n", length, receivedHeader.Length)
+	}
+
+	event := &events.Event{
 		Type:    receivedHeader.Type,
-		Payload: buffer,
+		Payload: payloadBuffer,
 	}
 
-	s.userConnectionsMutex.Unlock()
+	connection.EventChan <- event
+	return nil
 }
 
 func (s *Server) sendToAll(buffer []byte) {
 	log.Println("Sent", header.FromBuffer(buffer[:6]).Type.String(), "to all")
 
-	for _, connection := range s.userConnections {
+	for _, connection := range s.connections {
 		s.sendTo(connection, buffer)
 	}
 }
 
-func (s *Server) sendTo(connection *UserConnection, buffer []byte) {
-	_, err := s.connection.WriteTo(buffer[:6], connection.Addr)
+func (s *Server) sendTo(connection *Connection, buffer []byte) {
+	log.Println("Sent", header.FromBuffer(buffer[:6]).Type.String(), "to", connection.Conn.RemoteAddr().String())
+
+	_, err := connection.Conn.Write(buffer)
 	if err != nil {
 		log.Println(err)
-	}
-
-	if util.DecodeU32(buffer[2:6]) != 0 {
-		_, err = s.connection.WriteTo(buffer[6:], connection.Addr)
-		if err != nil {
-			log.Println(err)
-		}
 	}
 }

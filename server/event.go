@@ -8,31 +8,22 @@ import (
 	"tamagotchi/util"
 )
 
-func (s *Server) startHandleEvents() {
-	for {
-		s.handleEvents()
-	}
-}
+func (s *Server) startHandleEvents(c *Connection) {
+	for e := range c.EventChan {
+		err := s.handleEvent(c, e)
 
-func (s *Server) handleEvents() {
-	s.userConnectionsMutex.Lock()
-	for _, connection := range s.userConnections {
-		select {
-		case event := <-connection.EventChannel:
-			s.handleEvent(connection, event)
-		default:
-			continue
+		if err != nil {
+			log.Println(err)
 		}
 	}
-	s.userConnectionsMutex.Unlock()
 }
 
-func (s *Server) handleEvent(connection *UserConnection, event events.Event) {
-	log.Println("got", event.Type.String())
+func (s *Server) handleEvent(c *Connection, event *events.Event) error {
+	log.Println("Got", event.Type.String(), "from", c.Conn.RemoteAddr().String())
 
 	switch event.Type {
 	case events.Ping:
-		s.sendTo(connection, serverbuffer.PongBuffer())
+		s.sendTo(c, serverbuffer.PongBuffer())
 	case events.Feed:
 		s.game.addFood(gamestate.Point{
 			X: util.DecodeU16(event.Payload[0:2]),
@@ -41,4 +32,6 @@ func (s *Server) handleEvent(connection *UserConnection, event events.Event) {
 	case events.Clean:
 		s.game.clean(util.DecodeU32(event.Payload))
 	}
+
+	return nil
 }

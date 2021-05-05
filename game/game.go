@@ -3,6 +3,7 @@ package game
 import (
 	"github.com/hajimehoshi/ebiten/v2"
 	"golang.org/x/exp/rand"
+	"golang.org/x/image/font"
 	"image/color"
 	"log"
 	"os"
@@ -12,6 +13,7 @@ import (
 	"tamagotchi/network/events/buffers/clientbuffer"
 	"tamagotchi/resources/images"
 	"tamagotchi/util"
+	"time"
 )
 
 const (
@@ -83,6 +85,8 @@ func (g *game) removeDrawable(d drawable.Drawable) {
 }
 
 func StartGame() {
+	rand.Seed(uint64(time.Now().Unix()))
+
 	c := client.Connect()
 
 	character := drawable.NewCharacter(screenWidth/2, screenHeight/2)
@@ -101,9 +105,10 @@ func StartGame() {
 
 	c.AddListener(events.CleanPoo, func(buffer []byte) {
 		id := util.DecodeU32(buffer)
-		for _, poo := range g.poos {
+		for i, poo := range g.poos {
 			if poo.ID == id {
 				g.removeDrawable(poo)
+				g.poos = append(g.poos[:i], g.poos[i+1:]...)
 				return
 			}
 		}
@@ -111,9 +116,10 @@ func StartGame() {
 
 	c.AddListener(events.CharacterEat, func(buffer []byte) {
 		id := util.DecodeU32(buffer)
-		for _, food := range g.foods {
+		for i, food := range g.foods {
 			if food.ID == id {
 				g.removeDrawable(food)
+				g.foods = append(g.foods[:i], g.foods[i+1:]...)
 				return
 			}
 		}
@@ -150,6 +156,8 @@ func StartGame() {
 	g.addDrawable(feedButton)
 
 	ebiten.SetWindowSize(screenWidth*screenScale, screenHeight*screenScale)
+	//ebiten.SetScreenTransparent(true)
+	//ebiten.SetWindowDecorated(false)
 	if err := ebiten.RunGame(g); err != nil {
 		log.Fatal(err)
 	}

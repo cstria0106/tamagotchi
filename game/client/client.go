@@ -24,20 +24,12 @@ type Client struct {
 }
 
 func (c *Client) Send(buffer []byte) {
-	_, err := c.conn.Write(buffer[:6])
+	_, err := c.conn.Write(buffer)
 	if err != nil {
 		log.Println(err)
 	}
 
-	length := util.DecodeU32(buffer[2:6])
-
-	if length != 0 {
-		_, err = c.conn.Write(buffer[6:])
-		if err != nil {
-			log.Println(err)
-		}
-	}
-
+	log.Println("Sent", events.EventType(util.DecodeU16(buffer[0:2])).String())
 }
 
 func (c *Client) AddListener(eventType events.EventType, function func(buffer []byte)) uint32 {
@@ -101,18 +93,14 @@ func (c *Client) HandleEvents() {
 	}
 
 	receivedHeader := header.FromBuffer(buffer[:])
-	//log.Println("GOT HEADER", receivedHeader.Type.String())
+	log.Println("Got", receivedHeader.Type.String())
 
-	if receivedHeader.Length != 0 {
-		buffer = make([]byte, receivedHeader.Length)
-		length, err = c.conn.Read(buffer[:])
+	buffer = make([]byte, receivedHeader.Length)
+	length, err = c.conn.Read(buffer[:])
 
-		if uint32(length) != receivedHeader.Length {
-			log.Printf("recieved length(%d) is mismatching with metadata length(%d)\n", length, receivedHeader.Length)
-			return
-		}
-	} else {
-		buffer = nil
+	if uint32(length) != receivedHeader.Length {
+		log.Printf("recieved length(%d) is mismatching with metadata length(%d)\n", length, receivedHeader.Length)
+		return
 	}
 
 	if err != nil {
@@ -126,7 +114,7 @@ func (c *Client) HandleEvents() {
 }
 
 func Connect() Client {
-	conn, err := net.Dial("udp", "127.0.0.1:27775")
+	conn, err := net.Dial("tcp", "192.168.0.8:27775")
 	if err != nil {
 		log.Fatalln(err)
 	}
@@ -151,12 +139,12 @@ func Connect() Client {
 		pongChannel <- nil
 	}
 
+	listenerId := client.AddListener(events.Pong, pongListener)
+
 	go func() {
 		time.Sleep(3 * time.Second)
 		pongChannel <- errors.New("timed out")
 	}()
-
-	listenerId := client.AddListener(events.Pong, pongListener)
 
 	if err = <-pongChannel; err != nil {
 		log.Fatal(err)

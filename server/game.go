@@ -28,7 +28,7 @@ func CreateGame(server *Server) *Game {
 				ID:    0,
 				Doing: false,
 				Point: gamestate.Point{},
-				Full:  100,
+				Full:  80,
 			},
 		},
 	}

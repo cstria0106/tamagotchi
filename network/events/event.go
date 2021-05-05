@@ -12,6 +12,7 @@ const (
 	Pong
 	Feed
 	Clean
+	Chat
 	ClientEnd
 )
 
@@ -21,6 +22,7 @@ const (
 	AddPoo
 	CleanPoo
 	CharacterEat
+	ShowChat
 )
 
 var eventStringMap = map[EventType]string{
@@ -33,8 +35,25 @@ var eventStringMap = map[EventType]string{
 	AddPoo:        "AddPoo",
 	AddFood:       "AddFood",
 	CleanPoo:      "CleanPoo",
+	Chat:          "Chat",
+	ShowChat:      "ShowChat",
+}
+
+var eventPayloadLengthMap = map[EventType]uint32{
+	Ping:  0,
+	Pong:  0,
+	Feed:  4,
+	Clean: 4,
 }
 
 func (a EventType) String() string {
 	return eventStringMap[a]
+}
+
+func (e EventType) ValidatePayloadLength(length uint32) bool {
+	if required, ok := eventPayloadLengthMap[e]; ok {
+		return required <= length
+	}
+
+	return true
 }
