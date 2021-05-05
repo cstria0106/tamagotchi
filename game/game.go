@@ -3,7 +3,6 @@ package game
 import (
 	"github.com/hajimehoshi/ebiten/v2"
 	"golang.org/x/exp/rand"
-	"golang.org/x/image/font"
 	"image/color"
 	"log"
 	"os"
@@ -42,7 +41,6 @@ func (g *game) Update() error {
 
 	if g.cleanButton.JustDown {
 		if len(g.poos) > 0 {
-			log.Println(g.poos[0].ID)
 			g.client.Send(clientbuffer.CleanBuffer(g.poos[0].ID))
 		}
 	}

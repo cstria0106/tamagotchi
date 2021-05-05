@@ -6,6 +6,7 @@ import (
 	"log"
 	"tamagotchi/network/events"
 	"tamagotchi/network/header"
+	"tamagotchi/util"
 )
 
 func (s *Server) startHandleConnections() {
@@ -43,10 +44,10 @@ func (s *Server) startHandlePackets(connection *Connection) {
 		if err != nil {
 			if err == io.EOF {
 				s.removeConnection(connection.Conn.RemoteAddr())
-				break
 			} else {
 				log.Println(err)
 			}
+			break
 		}
 	}
 }
@@ -69,14 +70,17 @@ func (s *Server) handlePacket(connection *Connection) error {
 	}
 
 	payloadBuffer := make([]byte, receivedHeader.Length)
-	length, err := connection.Conn.Read(payloadBuffer)
 
-	if err != nil {
-		return err
-	}
+	if receivedHeader.Length > 0 {
+		length, err := connection.Conn.Read(payloadBuffer)
 
-	if uint32(length) != receivedHeader.Length {
-		return fmt.Errorf("received payload buffer length(%d) is mismatching with metadata length(%d)\n", length, receivedHeader.Length)
+		if err != nil {
+			return err
+		}
+
+		if uint32(length) != receivedHeader.Length {
+			return fmt.Errorf("received payload buffer length(%d) is mismatching with metadata length(%d)\n", length, receivedHeader.Length)
+		}
 	}
 
 	event := &events.Event{
@@ -99,8 +103,15 @@ func (s *Server) sendToAll(buffer []byte) {
 func (s *Server) sendTo(connection *Connection, buffer []byte) {
 	log.Println("Sent", header.FromBuffer(buffer[:6]).Type.String(), "to", connection.Conn.RemoteAddr().String())
 
-	_, err := connection.Conn.Write(buffer)
+	_, err := connection.Conn.Write(buffer[0:6])
 	if err != nil {
 		log.Println(err)
+	}
+
+	if util.DecodeU32(buffer[2:6]) != 0 {
+		_, err := connection.Conn.Write(buffer[6:])
+		if err != nil {
+			log.Println(err)
+		}
 	}
 }

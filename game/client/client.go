@@ -24,9 +24,16 @@ type Client struct {
 }
 
 func (c *Client) Send(buffer []byte) {
-	_, err := c.conn.Write(buffer)
+	_, err := c.conn.Write(buffer[0:6])
 	if err != nil {
 		log.Println(err)
+	}
+
+	if util.DecodeU32(buffer[2:6]) != 0 {
+		_, err := c.conn.Write(buffer[6:])
+		if err != nil {
+			log.Println(err)
+		}
 	}
 
 	log.Println("Sent", events.EventType(util.DecodeU16(buffer[0:2])).String())
@@ -79,8 +86,8 @@ func (c *Client) Close() {
 }
 
 func (c *Client) HandleEvents() {
-	buffer := make([]byte, 6)
-	length, err := c.conn.Read(buffer[:])
+	payloadBuffer := make([]byte, 6)
+	length, err := c.conn.Read(payloadBuffer[:])
 
 	if length != 6 {
 		log.Printf("received receivedHeader length(%d) is not 6\n", length)
@@ -92,24 +99,27 @@ func (c *Client) HandleEvents() {
 		return
 	}
 
-	receivedHeader := header.FromBuffer(buffer[:])
+	receivedHeader := header.FromBuffer(payloadBuffer[:])
 	log.Println("Got", receivedHeader.Type.String())
 
-	buffer = make([]byte, receivedHeader.Length)
-	length, err = c.conn.Read(buffer[:])
+	payloadBuffer = make([]byte, receivedHeader.Length)
 
-	if uint32(length) != receivedHeader.Length {
-		log.Printf("recieved length(%d) is mismatching with metadata length(%d)\n", length, receivedHeader.Length)
-		return
-	}
+	if receivedHeader.Length > 0 {
+		length, err = c.conn.Read(payloadBuffer[:])
 
-	if err != nil {
-		log.Println(err)
-		return
+		if uint32(length) != receivedHeader.Length {
+			log.Printf("recieved length(%d) is mismatching with metadata length(%d)\n", length, receivedHeader.Length)
+			return
+		}
+
+		if err != nil {
+			log.Println(err)
+			return
+		}
 	}
 
 	for _, listener := range c.listeners[receivedHeader.Type] {
-		listener.emit(buffer)
+		listener.emit(payloadBuffer)
 	}
 }
 
