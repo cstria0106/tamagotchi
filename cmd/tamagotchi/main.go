@@ -5,9 +5,9 @@ import (
 	"fmt"
 	"github.com/sqweek/dialog"
 	"tamagotchi/cmd/tamagotchi/client"
-	"tamagotchi/cmd/tamagotchi/game"
+	"tamagotchi/cmd/tamagotchi/resources/images"
+	"tamagotchi/cmd/tamagotchi/tamagotchi"
 	"tamagotchi/internal/data/version"
-	"tamagotchi/internal/resources/images"
 	"tamagotchi/internal/util/versionutil"
 )
 
@@ -29,7 +29,7 @@ func start(host string, port uint64) error {
 		return fmt.Errorf("local version(%s) is not matching with remote version(%s)", localVersion, hostVersion)
 	}
 
-	return game.StartGame(c)
+	return tamagotchi.Start(c)
 }
 
 func main() {
