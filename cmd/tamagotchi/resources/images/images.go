@@ -12,6 +12,7 @@ var CleanButton image.Image
 var FeedButton image.Image
 var Poo image.Image
 var Food image.Image
+var Cursor image.Image
 
 func load(filename string) (image.Image, error) {
 	var file *os.File
@@ -53,6 +54,11 @@ func Load() error {
 	}
 
 	Food, err = load("resources/images/rice.png")
+	if err != nil {
+		return err
+	}
+
+	Cursor, err = load("resources/images/cursor.png")
 	if err != nil {
 		return err
 	}

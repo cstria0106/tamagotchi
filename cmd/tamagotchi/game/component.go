@@ -1,33 +1,20 @@
 package game
 
 import (
-	"errors"
-	"github.com/hajimehoshi/ebiten/v2"
-	"github.com/segmentio/ksuid"
+	"strconv"
 )
 
-type Component interface {
-	GetComponentUID() ksuid.KSUID
-	Clone() Component
-	Init(e Entity) error
-	PreUpdate() error
-	Update() error
-	DrawOn(_ *ebiten.Image)
-	Dispose()
+type ComponentID uint64
+
+type Component struct {
+	ID   ComponentID
+	Data interface{}
 }
 
-type BaseComponent struct{}
-
-func (c *BaseComponent) GetComponentUID() ksuid.KSUID {
-	panic(errors.New("get component uid is not implemented"))
+func NewComponent(id ComponentID, data interface{}) *Component {
+	return &Component{id, data}
 }
 
-func (c *BaseComponent) Clone() *Component {
-	panic(errors.New("clone is not implemented"))
+func (c Component) String() string {
+	return strconv.FormatUint(uint64(c.ID), 10)
 }
-
-func (c *BaseComponent) Init(_ Entity) error    { return nil }
-func (c *BaseComponent) PreUpdate() error       { return nil }
-func (c *BaseComponent) Update() error          { return nil }
-func (c *BaseComponent) DrawOn(_ *ebiten.Image) {}
-func (c *BaseComponent) Dispose()               {}

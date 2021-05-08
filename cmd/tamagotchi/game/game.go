@@ -1,7 +1,6 @@
 package game
 
 import (
-	"errors"
 	"github.com/hajimehoshi/ebiten/v2"
 	"golang.org/x/exp/rand"
 	"sync"
@@ -24,31 +23,26 @@ type Game struct {
 	screenOptions *ScreenOptions
 	client        *client.Client
 
-	mutex   sync.Mutex
-	started bool
+	entityLock sync.Mutex
+	entities   []*Entity
 
-	entities *[256][]Entity
+	systemLock sync.Mutex
+	systems    []*System
+}
+
+func (g *Game) Client() *client.Client {
+	return g.client
 }
 
 func (g *Game) Start() error {
-	g.mutex.Lock()
-	defer g.mutex.Unlock()
-
-	if g.started {
-		return errors.New("game is already started")
-	}
-
-	g.started = true
-
 	err := ebiten.RunGame(g)
 	return err
 }
 
 func (g *Game) Update() error {
-	for _, entities := range g.entities {
-		for _, e := range entities {
-			err := e.Update()
-			if err != nil {
+	for _, system := range g.systems {
+		if system.Update != nil {
+			if err := system.Update(g); err != nil {
 				return err
 			}
 		}
@@ -58,9 +52,9 @@ func (g *Game) Update() error {
 }
 
 func (g *Game) Draw(screen *ebiten.Image) {
-	for _, entities := range g.entities {
-		for _, e := range entities {
-			e.Draw(screen)
+	for _, system := range g.systems {
+		if system.Draw != nil {
+			system.Draw(g, screen)
 		}
 	}
 }
@@ -69,63 +63,52 @@ func (g *Game) Layout(_, _ int) (int, int) {
 	return int(g.screenOptions.Width), int(g.screenOptions.Height)
 }
 
-func (g *Game) AddOrderedEntity(order int16, e Entity) error {
-	if order == 255 {
-		return errors.New("order must be 0 ~ 254")
-	}
+func (g *Game) WithComponents(componentIds []ComponentID, f func(components []*Component)) {
+	for _, e := range g.entities {
+		components, all := e.Components(componentIds)
 
-	g.mutex.Lock()
-	g.entities[1+order] = append(g.entities[1+order], e)
-	g.mutex.Unlock()
-
-	return e.Init()
-}
-
-func (g *Game) AddOrderedEntities(order int16, entities ...Entity) error {
-	if order > 254 {
-		return errors.New("order must be 0 ~ 254")
-	}
-
-	g.mutex.Lock()
-	g.entities[1+order] = append(g.entities[1+order], entities...)
-	g.mutex.Unlock()
-
-	for _, e := range entities {
-		err := e.Init()
-		if err != nil {
-			return err
+		if all {
+			f(components)
 		}
 	}
-	return nil
 }
 
-func (g *Game) AddEntity(e Entity) error {
-	return g.AddOrderedEntity(0, e)
+func (g *Game) AddEntities(entity ...*Entity) {
+	g.entityLock.Lock()
+	defer g.entityLock.Unlock()
+
+	g.entities = append(g.entities, entity...)
 }
 
-func (g *Game) AddEntities(entities ...Entity) error {
-	return g.AddOrderedEntities(0, entities...)
-}
+func (g *Game) RemoveEntity(entity *Entity) bool {
+	g.entityLock.Lock()
+	defer g.entityLock.Unlock()
 
-func (g *Game) RemoveEntity(e Entity) bool {
-	g.mutex.Lock()
-	defer g.mutex.Unlock()
-
-	for _, entities := range g.entities {
-		for i, element := range entities {
-			if element == e {
-				element.Dispose()
-				entities = append(entities[:i], entities[i+1:]...)
-				return true
-			}
+	for i, e := range g.entities {
+		if entity == e {
+			g.entities = append(g.entities[:i], g.entities[i+1:]...)
+			return true
 		}
 	}
 
 	return false
 }
 
-func (g *Game) AddService(s Entity) error {
-	return g.AddOrderedEntity(-1, s)
+func (g *Game) AddSystem(systems ...*System) error {
+	g.systemLock.Lock()
+	g.systems = append(g.systems, systems...)
+	g.systemLock.Unlock()
+
+	for _, system := range systems {
+		system.Game = g
+		if system.Init != nil {
+			if err := system.Init(g); err != nil {
+				return err
+			}
+		}
+	}
+
+	return nil
 }
 
 func (g *Game) ApplyScreenOptions(options *ScreenOptions) {
@@ -136,27 +119,12 @@ func (g *Game) ApplyScreenOptions(options *ScreenOptions) {
 func New(o *Options) (*Game, error) {
 	rand.Seed(uint64(time.Now().Unix()))
 
-	entities := [256][]Entity{}
-
-	// Services (1024)
-	entities[0] = make([]Entity, 0, 1024)
-
-	// Most bottom layer entities (1024)
-	entities[1] = make([]Entity, 0, 1024)
-
-	// Other entities (128)
-	for i := 2; i < 256; i++ {
-		entities[i] = make([]Entity, 0, 128)
-	}
-
 	g := &Game{
 		screenOptions: o.Screen,
 		client:        o.Client,
 
-		mutex:   sync.Mutex{},
-		started: false,
-
-		entities: &entities,
+		entities: make([]*Entity, 0, 1024),
+		systems:  make([]*System, 0, 1024),
 	}
 
 	g.ApplyScreenOptions(o.Screen)

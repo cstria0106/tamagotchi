@@ -7,13 +7,12 @@ import (
 	"tamagotchi/cmd/tamagotchi/tamagotchi/component"
 )
 
-func NewCharacter(x, y int16) *game.Entity {
-	image := ebiten.NewImageFromImage(images.Character)
+func NewCursor() *game.Entity {
+	image := ebiten.NewImageFromImage(images.Cursor)
 	w, h := image.Size()
 
 	return game.NewEntity(game.NewEntityComponents(
-		component.NewCharacter(),
-		component.NewDrawable(x, y, int16(w), int16(h), image),
-		component.NewClickable(x, y, int16(w), int16(h)),
+		component.NewDrawable(0, 0, int16(w), int16(h), image),
+		component.NewCursor(),
 	))
 }

@@ -1,4 +1,5 @@
 build:
+	@mkdir -p bin
 	@go build -o bin ./cmd/***
 	@cp -r resources bin
 

@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"net"
+	"sync"
 	"tamagotchi/internal/data/version"
 	"tamagotchi/internal/network/events"
 	"tamagotchi/internal/network/events/buffers/clientbuffer"
@@ -14,17 +15,44 @@ import (
 )
 
 type Listener = struct {
-	id   uint32
-	emit func(buffer []byte)
+	event events.EventType
+	emit  func(buffer []byte)
 }
 
 type Client struct {
-	conn           net.Conn
-	listeners      map[events.EventType][]*Listener
-	lastListenerId map[events.EventType]uint32
+	conn      net.Conn
+	listeners map[events.EventType][]*Listener
+	mutex     sync.Mutex
 }
 
-func (c *Client) Send(buffer []byte) {
+type Future struct {
+	client *Client
+}
+
+func (f *Future) Wait(event events.EventType) ([]byte, error) {
+	bufferChannel := make(chan []byte)
+	timeoutChannel := make(chan interface{})
+
+	listener := f.client.Listen(event, func(buffer []byte) {
+		bufferChannel <- buffer
+	})
+
+	defer f.client.RemoveListener(listener)
+
+	go func() {
+		time.Sleep(time.Second * 3)
+		timeoutChannel <- nil
+	}()
+
+	select {
+	case <-timeoutChannel:
+		return nil, errors.New("timed out")
+	case result := <-bufferChannel:
+		return result, nil
+	}
+}
+
+func (c *Client) Send(buffer []byte) *Future {
 	_, err := c.conn.Write(buffer[0:6])
 	if err != nil {
 		log.Println(err)
@@ -38,46 +66,43 @@ func (c *Client) Send(buffer []byte) {
 	}
 
 	log.Println("Sent", events.EventType(util.DecodeU16(buffer[0:2])).String())
+
+	return &Future{c}
 }
 
-func (c *Client) AddListener(eventType events.EventType, function func(buffer []byte)) uint32 {
-	id, ok := c.lastListenerId[eventType]
+func (c *Client) Listen(eventType events.EventType, function func(buffer []byte)) *Listener {
+	c.mutex.Lock()
+	defer c.mutex.Unlock()
 
-	if !ok {
-		id = 0
-	}
-
-	id++
-
-	if _, ok = c.listeners[eventType]; !ok {
+	if _, ok := c.listeners[eventType]; !ok {
 		c.listeners[eventType] = []*Listener{}
 	}
 
-	c.lastListenerId[eventType] = id
-
-	c.listeners[eventType] = append(c.listeners[eventType], &Listener{
-		id,
+	listener := &Listener{
+		eventType,
 		function,
-	})
-
-	return id
-}
-func (c *Client) RemoveListener(eventType events.EventType, id uint32) {
-	if listeners, ok := c.listeners[eventType]; ok {
-		i := 0
-		listenerCount := len(listeners)
-		for i < listenerCount {
-			if listeners[i].id == id {
-				listeners = append(listeners[:i], listeners[i+1:]...)
-				return
-			}
-		}
-	} else {
-		log.Printf("listeners for %s is empty\n", eventType.String())
-		return
 	}
 
-	log.Printf("there is no listener %d on type %s", id, eventType.String())
+	c.listeners[eventType] = append(c.listeners[eventType], listener)
+
+	return listener
+}
+func (c *Client) RemoveListener(listener *Listener) bool {
+	c.mutex.Lock()
+	defer c.mutex.Unlock()
+
+	event := listener.event
+
+	if listeners, ok := c.listeners[event]; ok {
+		for i, l := range listeners {
+			if l == listener {
+				c.listeners[event] = append(c.listeners[event][:i], c.listeners[event][i+1:]...)
+				return true
+			}
+		}
+	}
+
+	return false
 }
 
 func (c *Client) Close() {
@@ -88,8 +113,8 @@ func (c *Client) Close() {
 }
 
 func (c *Client) HandleEvents() {
-	payloadBuffer := make([]byte, 6)
-	length, err := c.conn.Read(payloadBuffer[:])
+	payload := make([]byte, 6)
+	length, err := c.conn.Read(payload[:])
 
 	if length != 6 {
 		log.Printf("received receivedHeader length(%d) is not 6\n", length)
@@ -101,13 +126,11 @@ func (c *Client) HandleEvents() {
 		return
 	}
 
-	receivedHeader := header.FromBuffer(payloadBuffer[:])
-	log.Println("Got", receivedHeader.Type.String())
-
-	payloadBuffer = make([]byte, receivedHeader.Length)
+	receivedHeader := header.FromBuffer(payload[:])
+	payload = make([]byte, receivedHeader.Length)
 
 	if receivedHeader.Length > 0 {
-		length, err = c.conn.Read(payloadBuffer[:])
+		length, err = c.conn.Read(payload[:])
 
 		if uint32(length) != receivedHeader.Length {
 			log.Printf("recieved length(%d) is mismatching with metadata length(%d)\n", length, receivedHeader.Length)
@@ -120,60 +143,40 @@ func (c *Client) HandleEvents() {
 		}
 	}
 
+	log.Println("Got", receivedHeader.Type.String())
+
 	for _, listener := range c.listeners[receivedHeader.Type] {
-		listener.emit(payloadBuffer)
+		listener.emit(payload)
 	}
+}
+
+func (c *Client) StartHandleEvents() {
+	go func() {
+		for {
+			c.HandleEvents()
+		}
+	}()
 }
 
 func Connect(host string, port uint16) (*Client, *version.Version, error) {
 	conn, err := net.Dial("tcp", fmt.Sprintf("%s:%d", host, port))
+
 	if err != nil {
 		return nil, nil, errors.New("could not connect to server")
 	}
 
 	client := &Client{
-		conn:           conn,
-		listeners:      map[events.EventType][]*Listener{},
-		lastListenerId: map[events.EventType]uint32{},
+		conn:      conn,
+		listeners: map[events.EventType][]*Listener{},
 	}
 
-	go func() {
-		for {
-			client.HandleEvents()
-		}
-	}()
+	client.StartHandleEvents()
 
-	client.Send(clientbuffer.PingBuffer())
+	pong, err := client.Send(clientbuffer.PingBuffer()).Wait(events.Pong)
 
-	type pongResponse struct {
-		payload []byte
-		err     error
-	}
-
-	pongChannel := make(chan pongResponse)
-
-	pongListener := func(payload []byte) {
-		pongChannel <- pongResponse{
-			payload: payload,
-		}
-	}
-
-	listenerId := client.AddListener(events.Pong, pongListener)
-
-	go func() {
-		time.Sleep(3 * time.Second)
-		pongChannel <- pongResponse{
-			err: errors.New("server is not responding"),
-		}
-	}()
-
-	var pong pongResponse
-
-	if pong = <-pongChannel; pong.err != nil {
+	if err != nil {
 		return nil, nil, err
 	}
 
-	client.RemoveListener(events.Pong, listenerId)
-
-	return client, version.FromBuffer(pong.payload), nil
+	return client, version.FromBuffer(pong), nil
 }

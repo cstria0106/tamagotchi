@@ -1,47 +1,23 @@
 package game
 
 import (
-	"github.com/hajimehoshi/ebiten/v2"
-	"github.com/segmentio/ksuid"
+	"fmt"
 	"sync"
 )
 
-type Entity interface {
-	AddComponent(c Component) error
-	GetComponent(componentUID ksuid.KSUID) Component
-	GetComponents(componentUID ksuid.KSUID) []Component
-	RemoveComponent(component Component) bool
-	Clone() Entity
-	Init() error
-	Dispose()
-	Update() error
-	Draw(screen *ebiten.Image)
-
-	Game() *Game
-	ID() string
-
-	assignComponents(components ...Component)
+type Entity struct {
+	mutex      sync.Mutex
+	components []*Component
 }
 
-type baseEntity struct {
-	game        *Game
-	id          string
-	mutex       sync.Mutex
-	initialized bool
-	components  []Component
+func (g *Game) NewEntity(options ...func(*Entity)) *Entity {
+	return NewEntity(options...)
 }
 
-func (g *Game) NewBaseEntity(options ...func(Entity)) *baseEntity {
-	return NewBaseEntity(g, options...)
-}
-
-func NewBaseEntity(g *Game, options ...func(Entity)) *baseEntity {
-	entity := baseEntity{
-		game:        g,
-		id:          ksuid.New().String(),
-		mutex:       sync.Mutex{},
-		initialized: false,
-		components:  make([]Component, 0),
+func NewEntity(options ...func(*Entity)) *Entity {
+	entity := Entity{
+		mutex:      sync.Mutex{},
+		components: make([]*Component, 0),
 	}
 
 	for _, option := range options {
@@ -51,62 +27,48 @@ func NewBaseEntity(g *Game, options ...func(Entity)) *baseEntity {
 	return &entity
 }
 
-func NewBaseEntityComponents(components ...Component) func(Entity) {
-	return func(e Entity) {
-		e.assignComponents(components...)
+func NewEntityComponents(components ...*Component) func(*Entity) {
+	return func(e *Entity) {
+		e.AddComponents(components...)
 	}
 }
 
-func (e *baseEntity) assignComponents(components ...Component) {
-	e.components = components
-}
-
-func (e *baseEntity) ID() string {
-	return e.id
-}
-
-func (e *baseEntity) Game() *Game {
-	return e.game
-}
-
-func (e *baseEntity) AddComponent(c Component) error {
-	if e.initialized {
-		err := c.Init(e)
-		if err != nil {
-			return err
-		}
-	}
-
+func (e *Entity) AddComponents(c ...*Component) {
 	e.mutex.Lock()
-	e.components = append(e.components, c)
-	e.mutex.Unlock()
+	defer e.mutex.Unlock()
 
-	return nil
+	e.components = append(e.components, c...)
 }
 
-func (e *baseEntity) GetComponent(componentUID ksuid.KSUID) Component {
+func (e *Entity) Components(componentIDs []ComponentID) (components []*Component, all bool) {
+	e.mutex.Lock()
+	defer e.mutex.Unlock()
+
+	count := 0
+	length := len(componentIDs)
+
+	components = make([]*Component, length)
+
 	for _, c := range e.components {
-		if c.GetComponentUID() == componentUID {
-			return c
+		for index, id := range componentIDs {
+			if c.ID == id {
+				components[index] = c
+				count++
+
+				if count == length {
+					return components, true
+				}
+			}
 		}
 	}
 
-	return nil
+	return components, false
 }
 
-func (e *baseEntity) GetComponents(componentUID ksuid.KSUID) []Component {
-	components := make([]Component, 0)
+func (e *Entity) RemoveComponent(component *Component) (removed bool) {
+	e.mutex.Lock()
+	defer e.mutex.Unlock()
 
-	for _, c := range e.components {
-		if c.GetComponentUID() == componentUID {
-			components = append(components, c)
-		}
-	}
-
-	return components
-}
-
-func (e *baseEntity) RemoveComponent(component Component) bool {
 	for i, c := range e.components {
 		if c == component {
 			e.components = append(e.components[:i], e.components[i+1:]...)
@@ -117,43 +79,15 @@ func (e *baseEntity) RemoveComponent(component Component) bool {
 	return false
 }
 
-func (e *baseEntity) Clone() Entity {
-	return NewBaseEntity(e.game, NewBaseEntityComponents(e.components...))
+func (e *Entity) Clone() *Entity {
+	components := make([]*Component, len(e.components))
+	for i, c := range components {
+		cloned := *c
+		components[i] = &cloned
+	}
+	return NewEntity(NewEntityComponents(components...))
 }
 
-func (e *baseEntity) Init() error {
-	for _, c := range e.components {
-		if err := c.Init(e); err != nil {
-			return err
-		}
-	}
-	return nil
-}
-
-func (e *baseEntity) Dispose() {
-	for _, c := range e.components {
-		c.Dispose()
-	}
-}
-
-func (e *baseEntity) Update() error {
-	for _, c := range e.components {
-		if err := c.PreUpdate(); err != nil {
-			return err
-		}
-	}
-
-	for _, c := range e.components {
-		if err := c.Update(); err != nil {
-			return err
-		}
-	}
-
-	return nil
-}
-
-func (e *baseEntity) Draw(screen *ebiten.Image) {
-	for _, c := range e.components {
-		c.DrawOn(screen)
-	}
+func (e *Entity) String() string {
+	return fmt.Sprintf("entity(+%d components)", len(e.components))
 }
