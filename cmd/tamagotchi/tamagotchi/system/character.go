@@ -1,58 +1,49 @@
 package system
 
 import (
-	"github.com/hajimehoshi/ebiten/v2"
-	"math"
+	"github.com/gopackage/tween/curves"
+	"golang.org/x/exp/rand"
 	"tamagotchi/cmd/tamagotchi/game"
 	"tamagotchi/cmd/tamagotchi/tamagotchi/component"
 )
 
 func Character() *game.System {
 	return &game.System{
-		ID: CHARACTER,
 		Init: func(g *game.Game) error {
+			g.WithComponents([]game.ComponentID{component.CHARACTER, component.TWEEN}, func(components []*game.Component) {
+				tween := components[1].Data.(*component.Tween)
+				tween.Duration = 1000
+				tween.Curve = curves.Linear
+			})
 			return nil
 		},
 		Update: func(g *game.Game) error {
 			g.WithComponents(
-				[]game.ComponentID{component.CHARACTER, component.DRAWABLE, component.MOUSEEVENT},
+				[]game.ComponentID{component.CHARACTER, component.DRAWABLE, component.MOUSEEVENT, component.TWEEN},
 				func(components []*game.Component) {
 					character := components[0].Data.(*component.Character)
 					drawable := components[1].Data.(*component.Drawable)
 					clickable := components[2].Data.(*component.MouseEvent)
+					tween := components[3].Data.(*component.Tween)
 
-					cursorX, cursorY := ebiten.CursorPosition()
-					centerX := drawable.X + drawable.W/2
-					centerY := drawable.Y + drawable.H/2
-
-					deltaX := centerX - int16(cursorX)
-					deltaY := centerY - int16(cursorY)
-
-					direction := math.Atan2(float64(deltaY), float64(deltaX))
-					distance := math.Sqrt(float64(deltaX*deltaX + deltaY*deltaY))
-
-					character.X += math.Max(1, 5-(distance/10)) * math.Cos(direction)
-					character.Y += math.Max(1, 5-(distance/10)) * math.Sin(direction)
-
-					if character.X < 0 {
-						character.X = 0
+					if clickable.JustDown {
+						x := int16(rand.Uint64() % 100)
+						y := int16(rand.Uint64() % 150)
+						character.MoveTo(x, y)
 					}
 
-					if character.X > float64(100-drawable.W) {
-						character.X = float64(100 - drawable.W)
+					if character.Moving {
+						tween.Reset()
+						tween.Resume()
+						character.Moving = false
 					}
 
-					if character.Y < 0 {
-						character.Y = 0
-					}
+					character.X = character.LastX + int16(float64(character.TargetX-character.LastX)*tween.Value)
+					character.Y = character.LastY + int16(float64(character.TargetY-character.LastY)*tween.Value)
 
-					if character.Y > float64(150-drawable.H) {
-						character.Y = float64(150 - drawable.H)
-					}
-
-					drawable.X = int16(character.X)
-					drawable.Y = int16(character.Y)
-					clickable.MoveTo(int16(character.X), int16(character.Y))
+					drawable.X = character.X
+					drawable.Y = character.Y
+					clickable.MoveTo(character.X, character.Y)
 				},
 			)
 

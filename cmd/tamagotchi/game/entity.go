@@ -2,11 +2,9 @@ package game
 
 import (
 	"fmt"
-	"sync"
 )
 
 type Entity struct {
-	mutex      sync.Mutex
 	components []*Component
 }
 
@@ -16,7 +14,6 @@ func (g *Game) NewEntity(options ...func(*Entity)) *Entity {
 
 func NewEntity(options ...func(*Entity)) *Entity {
 	entity := Entity{
-		mutex:      sync.Mutex{},
 		components: make([]*Component, 0),
 	}
 
@@ -34,16 +31,10 @@ func NewEntityComponents(components ...*Component) func(*Entity) {
 }
 
 func (e *Entity) AddComponents(c ...*Component) {
-	e.mutex.Lock()
-	defer e.mutex.Unlock()
-
 	e.components = append(e.components, c...)
 }
 
 func (e *Entity) Components(componentIDs []ComponentID) (components []*Component, all bool) {
-	e.mutex.Lock()
-	defer e.mutex.Unlock()
-
 	count := 0
 	length := len(componentIDs)
 
@@ -66,9 +57,6 @@ func (e *Entity) Components(componentIDs []ComponentID) (components []*Component
 }
 
 func (e *Entity) RemoveComponent(component *Component) (removed bool) {
-	e.mutex.Lock()
-	defer e.mutex.Unlock()
-
 	for i, c := range e.components {
 		if c == component {
 			e.components = append(e.components[:i], e.components[i+1:]...)

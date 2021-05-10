@@ -8,7 +8,6 @@ import (
 
 func Background() *game.System {
 	return &game.System{
-		ID: BACKGROUND,
 		Draw: func(_ *game.Game, screen *ebiten.Image) {
 			screen.Fill(image.White)
 		},

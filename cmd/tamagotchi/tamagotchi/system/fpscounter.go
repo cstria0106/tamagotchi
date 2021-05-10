@@ -9,7 +9,6 @@ import (
 
 func FPSCounter() *game.System {
 	return &game.System{
-		ID: FPS_COUNTER,
 		Draw: func(_ *game.Game, screen *ebiten.Image) {
 			ebitenutil.DebugPrint(screen, fmt.Sprintf("%.0f", ebiten.CurrentFPS()))
 		},

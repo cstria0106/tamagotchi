@@ -27,17 +27,18 @@ func Start(c *client.Client) error {
 		return err
 	}
 
-	background := game.MergeSystems(system.Background(), system.FPSCounter())
+	background := game.MergeSystems(system.Background(), system.Cursor())
 	foreground := game.MergeSystems(system.Tween(), system.Mouse(), system.Draw())
 	play := game.MergeSystems(system.Character())
-	top := game.MergeSystems(system.FPSCounter(), system.Cursor())
+	top := game.MergeSystems(system.FPSCounter())
 
 	err = g.AddSystem(background, play, foreground, top)
 	if err != nil {
 		return err
 	}
 
-	g.AddEntities(entity.NewCharacter(screenWidth/2, screenHeight/2))
+	character := entity.NewCharacter(screenWidth/2, screenHeight/2)
+	g.AddEntities(character)
 	g.AddEntities(entity.NewCursor())
 
 	return g.Start()

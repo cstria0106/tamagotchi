@@ -12,8 +12,9 @@ func NewCharacter(x, y int16) *game.Entity {
 	w, h := image.Size()
 
 	return game.NewEntity(game.NewEntityComponents(
-		component.NewCharacter(),
+		component.NewCharacter(x, y),
 		component.NewDrawable(x, y, int16(w), int16(h), image),
 		component.NewClickable(x, y, int16(w), int16(h)),
+		component.NewTween(nil),
 	))
 }

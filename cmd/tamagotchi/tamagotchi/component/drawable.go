@@ -2,12 +2,14 @@ package component
 
 import (
 	"github.com/hajimehoshi/ebiten/v2"
+	"image/color"
 	"tamagotchi/cmd/tamagotchi/game"
 )
 
 type Drawable struct {
 	X, Y, W, H int16
 	Image      *ebiten.Image
+	Color      color.Color
 }
 
 func NewDrawable(x, y, w, h int16, image *ebiten.Image) *game.Component {
@@ -19,6 +21,7 @@ func NewDrawable(x, y, w, h int16, image *ebiten.Image) *game.Component {
 			W:     w,
 			H:     h,
 			Image: image,
+			Color: color.Black,
 		},
 	)
 }

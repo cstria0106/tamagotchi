@@ -10,7 +10,6 @@ import (
 
 func Tween() *game.System {
 	return &game.System{
-		ID: TWEEN,
 		Draw: func(_ *game.Game, screen *ebiten.Image) {
 			ebitenutil.DebugPrint(screen, fmt.Sprintf("%.0f", ebiten.CurrentFPS()))
 		},

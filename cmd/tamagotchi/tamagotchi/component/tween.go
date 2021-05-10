@@ -31,6 +31,7 @@ func (t *Tween) Resume() {
 
 func (t *Tween) Reset() {
 	t.Tick = 0
+	t.Value = t.Curve(0)
 }
 
 func NewTween(options *TweenOptions) *game.Component {

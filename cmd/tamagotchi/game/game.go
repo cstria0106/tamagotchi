@@ -1,6 +1,7 @@
 package game
 
 import (
+	"errors"
 	"github.com/hajimehoshi/ebiten/v2"
 	"golang.org/x/exp/rand"
 	"sync"
@@ -23,11 +24,11 @@ type Game struct {
 	screenOptions *ScreenOptions
 	client        *client.Client
 
-	entityLock sync.Mutex
-	entities   []*Entity
+	lock    sync.Mutex
+	started bool
 
-	systemLock sync.Mutex
-	systems    []*System
+	entities []*Entity
+	systems  []*System
 }
 
 func (g *Game) Client() *client.Client {
@@ -35,6 +36,22 @@ func (g *Game) Client() *client.Client {
 }
 
 func (g *Game) Start() error {
+	g.lock.Lock()
+	if g.started {
+		return errors.New("game already started")
+	}
+
+	g.started = true
+	g.lock.Unlock()
+
+	for _, system := range g.systems {
+		if system.Init != nil {
+			if err := system.Init(g); err != nil {
+				return err
+			}
+		}
+	}
+
 	err := ebiten.RunGame(g)
 	return err
 }
@@ -74,16 +91,10 @@ func (g *Game) WithComponents(componentIds []ComponentID, f func(components []*C
 }
 
 func (g *Game) AddEntities(entity ...*Entity) {
-	g.entityLock.Lock()
-	defer g.entityLock.Unlock()
-
 	g.entities = append(g.entities, entity...)
 }
 
 func (g *Game) RemoveEntity(entity *Entity) bool {
-	g.entityLock.Lock()
-	defer g.entityLock.Unlock()
-
 	for i, e := range g.entities {
 		if entity == e {
 			g.entities = append(g.entities[:i], g.entities[i+1:]...)
@@ -95,15 +106,14 @@ func (g *Game) RemoveEntity(entity *Entity) bool {
 }
 
 func (g *Game) AddSystem(systems ...*System) error {
-	g.systemLock.Lock()
 	g.systems = append(g.systems, systems...)
-	g.systemLock.Unlock()
 
-	for _, system := range systems {
-		system.Game = g
-		if system.Init != nil {
-			if err := system.Init(g); err != nil {
-				return err
+	if g.started {
+		for _, system := range systems {
+			if system.Init != nil {
+				if err := system.Init(g); err != nil {
+					return err
+				}
 			}
 		}
 	}

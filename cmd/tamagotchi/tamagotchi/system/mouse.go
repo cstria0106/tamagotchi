@@ -10,7 +10,6 @@ import (
 
 func Mouse() *game.System {
 	return &game.System{
-		ID: MOUSE,
 		Update: func(g *game.Game) error {
 			g.WithComponents([]game.ComponentID{component.MOUSEEVENT}, func(components []*game.Component) {
 				clickable := components[0].Data.(*component.MouseEvent)
