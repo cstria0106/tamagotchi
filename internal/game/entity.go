@@ -8,10 +8,6 @@ type Entity struct {
 	components []*Component
 }
 
-func (g *Game) NewEntity(options ...func(*Entity)) *Entity {
-	return NewEntity(options...)
-}
-
 func NewEntity(options ...func(*Entity)) *Entity {
 	entity := Entity{
 		components: make([]*Component, 0),

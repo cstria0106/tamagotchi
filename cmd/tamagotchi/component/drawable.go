@@ -3,7 +3,7 @@ package component
 import (
 	"github.com/hajimehoshi/ebiten/v2"
 	"image/color"
-	"tamagotchi/cmd/tamagotchi/game"
+	"tamagotchi/internal/game"
 )
 
 type Drawable struct {

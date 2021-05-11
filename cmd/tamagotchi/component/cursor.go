@@ -1,7 +1,7 @@
 package component
 
 import (
-	"tamagotchi/cmd/tamagotchi/game"
+	"tamagotchi/internal/game"
 )
 
 type Cursor struct{}

@@ -1,16 +1,10 @@
 package main
 
 import (
-	"flag"
-	"log"
+	"tamagotchi/cmd/tamagotchi/cli"
 )
 
 func main() {
-	var port uint64
-	flag.Uint64Var(&port, "port", 27775, "port to connect/host")
-	flag.Parse()
-
-	log.Println("starting server")
-
-	StartServer(uint16(port))
+	arguments := cli.GetArguments()
+	StartServer(arguments.Port)
 }

@@ -6,7 +6,7 @@ import (
 	"net"
 	"sync"
 	"tamagotchi/internal/data/version"
-	version2 "tamagotchi/internal/util/versionutil"
+	"tamagotchi/internal/util/versionutil"
 )
 
 type Server struct {
@@ -18,7 +18,7 @@ type Server struct {
 }
 
 func Create(port uint16) *Server {
-	ver, err := version2.GetVersion()
+	ver, err := versionutil.GetLocalVersion()
 	if err != nil {
 		log.Fatal(err)
 	}

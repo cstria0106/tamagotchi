@@ -5,7 +5,7 @@ import (
 	"tamagotchi/internal/data/version"
 )
 
-func GetVersion() (*version.Version, error) {
+func GetLocalVersion() (*version.Version, error) {
 	yaml, err := ioutil.ReadFile("resources/version.yaml")
 	if err != nil {
 		return nil, err

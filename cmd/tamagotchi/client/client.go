@@ -6,9 +6,7 @@ import (
 	"log"
 	"net"
 	"sync"
-	"tamagotchi/internal/data/version"
 	"tamagotchi/internal/network/events"
-	"tamagotchi/internal/network/events/buffers/clientbuffer"
 	"tamagotchi/internal/network/header"
 	"tamagotchi/internal/util"
 	"time"
@@ -158,11 +156,11 @@ func (c *Client) StartHandleEvents() {
 	}()
 }
 
-func Connect(host string, port uint16) (*Client, *version.Version, error) {
+func Connect(host string, port uint16) (*Client, error) {
 	conn, err := net.Dial("tcp", fmt.Sprintf("%s:%d", host, port))
 
 	if err != nil {
-		return nil, nil, errors.New("could not connect to server")
+		return nil, err
 	}
 
 	client := &Client{
@@ -171,12 +169,5 @@ func Connect(host string, port uint16) (*Client, *version.Version, error) {
 	}
 
 	client.StartHandleEvents()
-
-	pong, err := client.Send(clientbuffer.PingBuffer()).Wait(events.Pong)
-
-	if err != nil {
-		return nil, nil, err
-	}
-
-	return client, version.FromBuffer(pong), nil
+	return client, nil
 }

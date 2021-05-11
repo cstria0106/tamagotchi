@@ -2,7 +2,7 @@ package component
 
 import (
 	"github.com/gopackage/tween/curves"
-	"tamagotchi/cmd/tamagotchi/game"
+	"tamagotchi/internal/game"
 )
 
 type Tween struct {

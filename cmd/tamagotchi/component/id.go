@@ -1,6 +1,6 @@
 package component
 
-import "tamagotchi/cmd/tamagotchi/game"
+import "tamagotchi/internal/game"
 
 const (
 	CHARACTER game.ComponentID = iota
@@ -8,4 +8,5 @@ const (
 	DRAWABLE
 	MOUSEEVENT
 	TWEEN
+	NETWORK
 )

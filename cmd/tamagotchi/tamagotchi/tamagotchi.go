@@ -1,25 +1,28 @@
 package tamagotchi
 
 import (
-	"tamagotchi/cmd/tamagotchi/client"
-	"tamagotchi/cmd/tamagotchi/game"
-	"tamagotchi/cmd/tamagotchi/tamagotchi/entity"
-	"tamagotchi/cmd/tamagotchi/tamagotchi/system"
+	"github.com/hajimehoshi/ebiten/v2"
+	"tamagotchi/cmd/tamagotchi/cli"
+	"tamagotchi/cmd/tamagotchi/component"
+	"tamagotchi/cmd/tamagotchi/engine"
+	"tamagotchi/cmd/tamagotchi/entity"
+	"tamagotchi/cmd/tamagotchi/system"
+	"tamagotchi/internal/game"
 )
 
 const (
 	screenWidth  = 100
 	screenHeight = 150
-	screenScale  = 4
+	//screenScale  = 4
 )
 
-func Start(c *client.Client) error {
-	g, err := game.New(&game.Options{
-		Client: c,
-		Screen: &game.ScreenOptions{
-			Width:  screenWidth,
-			Height: screenHeight,
-			Scale:  screenScale,
+func StartTamagotchi(arguments *cli.Arguments) error {
+	tamagotchi, err := engine.NewGame(&engine.Options{
+		Arguments: arguments,
+		Screen: &engine.ScreenOptions{
+			Width:  100,
+			Height: 150,
+			Scale:  4,
 		},
 	})
 
@@ -27,19 +30,25 @@ func Start(c *client.Client) error {
 		return err
 	}
 
-	background := game.MergeSystems(system.Background(), system.Cursor())
-	foreground := game.MergeSystems(system.Tween(), system.Mouse(), system.Draw())
-	play := game.MergeSystems(system.Character())
-	top := game.MergeSystems(system.FPSCounter())
+	background := engine.MergeSystems(system.Background, system.Cursor, system.Game)
+	foreground := engine.MergeSystems(system.Tween, system.Mouse, system.Draw)
+	play := engine.MergeSystems(system.Character)
+	top := engine.MergeSystems(system.FPSCounter)
 
-	err = g.AddSystem(background, play, foreground, top)
+	err = tamagotchi.AddSystem(background, play, foreground, top)
 	if err != nil {
 		return err
 	}
 
 	character := entity.NewCharacter(screenWidth/2, screenHeight/2)
-	g.AddEntities(character)
-	g.AddEntities(entity.NewCursor())
+	tamagotchi.AddEntities(character)
+	tamagotchi.AddEntities(entity.NewCursor())
+	tamagotchi.AddEntities(game.NewEntity(game.NewEntityComponents(component.NewNetwork(arguments.Host, arguments.Port))))
 
-	return g.Start()
+	err = tamagotchi.Start()
+	if err != nil {
+		return err
+	}
+
+	return ebiten.RunGame(tamagotchi)
 }
