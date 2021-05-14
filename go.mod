@@ -1,4 +1,4 @@
-module tamagotchi
+module github.com/cstria0106/tamagotchi
 
 go 1.16
 
