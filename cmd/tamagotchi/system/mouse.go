@@ -2,11 +2,11 @@ package system
 
 import (
 	"github.com/Tarliton/collision2d"
+	"github.com/cstria0106/tamagotchi/cmd/tamagotchi/component"
+	"github.com/cstria0106/tamagotchi/cmd/tamagotchi/engine"
+	"github.com/cstria0106/tamagotchi/internal/game"
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/hajimehoshi/ebiten/v2/inpututil"
-	"tamagotchi/cmd/tamagotchi/component"
-	"tamagotchi/cmd/tamagotchi/engine"
-	"tamagotchi/internal/game"
 )
 
 var Mouse = engine.NewSystem(&engine.SystemOptions{

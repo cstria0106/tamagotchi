@@ -1,8 +1,8 @@
 package engine
 
 import (
+	"github.com/cstria0106/tamagotchi/internal/game"
 	"github.com/hajimehoshi/ebiten/v2"
-	"tamagotchi/internal/game"
 )
 
 type System interface {

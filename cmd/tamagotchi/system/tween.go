@@ -1,9 +1,9 @@
 package system
 
 import (
-	"tamagotchi/cmd/tamagotchi/component"
-	"tamagotchi/cmd/tamagotchi/engine"
-	"tamagotchi/internal/game"
+	"github.com/cstria0106/tamagotchi/cmd/tamagotchi/component"
+	"github.com/cstria0106/tamagotchi/cmd/tamagotchi/engine"
+	"github.com/cstria0106/tamagotchi/internal/game"
 )
 
 var Tween = engine.NewSystem(&engine.SystemOptions{

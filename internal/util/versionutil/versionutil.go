@@ -1,8 +1,8 @@
 package versionutil
 
 import (
+	"github.com/cstria0106/tamagotchi/internal/data/version"
 	"io/ioutil"
-	"tamagotchi/internal/data/version"
 )
 
 func GetLocalVersion() (*version.Version, error) {

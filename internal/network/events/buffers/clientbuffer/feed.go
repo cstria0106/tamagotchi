@@ -1,9 +1,9 @@
 package clientbuffer
 
 import (
-	"tamagotchi/internal/network/events"
-	"tamagotchi/internal/network/header"
-	"tamagotchi/internal/util"
+	"github.com/cstria0106/tamagotchi/internal/network/events"
+	"github.com/cstria0106/tamagotchi/internal/network/header"
+	"github.com/cstria0106/tamagotchi/internal/util"
 )
 
 func FeedBuffer(x, y uint16) []byte {

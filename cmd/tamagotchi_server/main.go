@@ -1,7 +1,7 @@
 package main
 
 import (
-	"tamagotchi/cmd/tamagotchi/cli"
+	"github.com/cstria0106/tamagotchi/cmd/tamagotchi/cli"
 )
 
 func main() {

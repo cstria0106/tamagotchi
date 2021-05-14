@@ -1,11 +1,11 @@
 package system
 
 import (
+	"github.com/cstria0106/tamagotchi/cmd/tamagotchi/component"
+	"github.com/cstria0106/tamagotchi/cmd/tamagotchi/engine"
+	"github.com/cstria0106/tamagotchi/internal/game"
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/lucasb-eyer/go-colorful"
-	"tamagotchi/cmd/tamagotchi/component"
-	"tamagotchi/cmd/tamagotchi/engine"
-	"tamagotchi/internal/game"
 )
 
 var Cursor = engine.NewSystem(&engine.SystemOptions{

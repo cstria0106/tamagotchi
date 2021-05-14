@@ -2,8 +2,8 @@ package version
 
 import (
 	"fmt"
+	"github.com/cstria0106/tamagotchi/internal/util"
 	"gopkg.in/yaml.v2"
-	"tamagotchi/internal/util"
 )
 
 type Version struct {

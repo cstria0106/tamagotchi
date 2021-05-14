@@ -1,6 +1,6 @@
 package component
 
-import "tamagotchi/internal/game"
+import "github.com/cstria0106/tamagotchi/internal/game"
 
 const (
 	CHARACTER game.ComponentID = iota

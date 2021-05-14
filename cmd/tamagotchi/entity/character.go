@@ -1,10 +1,10 @@
 package entity
 
 import (
+	"github.com/cstria0106/tamagotchi/cmd/tamagotchi/component"
+	"github.com/cstria0106/tamagotchi/cmd/tamagotchi/resources/images"
+	"github.com/cstria0106/tamagotchi/internal/game"
 	"github.com/hajimehoshi/ebiten/v2"
-	"tamagotchi/cmd/tamagotchi/component"
-	"tamagotchi/cmd/tamagotchi/resources/images"
-	"tamagotchi/internal/game"
 )
 
 func NewCharacter(x, y int16) *game.Entity {

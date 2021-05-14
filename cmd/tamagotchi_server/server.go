@@ -2,11 +2,11 @@ package main
 
 import (
 	"fmt"
+	"github.com/cstria0106/tamagotchi/internal/data/version"
+	"github.com/cstria0106/tamagotchi/internal/util/versionutil"
 	"log"
 	"net"
 	"sync"
-	"tamagotchi/internal/data/version"
-	"tamagotchi/internal/util/versionutil"
 )
 
 type Server struct {

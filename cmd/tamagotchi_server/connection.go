@@ -1,8 +1,8 @@
 package main
 
 import (
+	"github.com/cstria0106/tamagotchi/internal/network/events"
 	"net"
-	"tamagotchi/internal/network/events"
 )
 
 type Connection struct {

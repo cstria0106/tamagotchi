@@ -1,12 +1,12 @@
 package component
 
 import (
+	"github.com/cstria0106/tamagotchi/cmd/tamagotchi/client"
+	"github.com/cstria0106/tamagotchi/internal/data/version"
+	"github.com/cstria0106/tamagotchi/internal/game"
+	"github.com/cstria0106/tamagotchi/internal/network/events"
+	"github.com/cstria0106/tamagotchi/internal/network/events/buffers/clientbuffer"
 	"sync"
-	"tamagotchi/cmd/tamagotchi/client"
-	"tamagotchi/internal/data/version"
-	"tamagotchi/internal/game"
-	"tamagotchi/internal/network/events"
-	"tamagotchi/internal/network/events/buffers/clientbuffer"
 )
 
 type Network struct {

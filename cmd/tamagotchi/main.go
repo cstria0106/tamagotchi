@@ -1,11 +1,11 @@
 package main
 
 import (
+	"github.com/cstria0106/tamagotchi/cmd/tamagotchi/cli"
+	"github.com/cstria0106/tamagotchi/cmd/tamagotchi/resources/images"
+	"github.com/cstria0106/tamagotchi/cmd/tamagotchi/tamagotchi"
 	"github.com/sqweek/dialog"
 	"os"
-	"tamagotchi/cmd/tamagotchi/cli"
-	"tamagotchi/cmd/tamagotchi/resources/images"
-	"tamagotchi/cmd/tamagotchi/tamagotchi"
 )
 
 func preloadImages() error {

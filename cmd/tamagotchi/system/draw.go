@@ -1,10 +1,10 @@
 package system
 
 import (
+	"github.com/cstria0106/tamagotchi/cmd/tamagotchi/component"
+	"github.com/cstria0106/tamagotchi/cmd/tamagotchi/engine"
+	"github.com/cstria0106/tamagotchi/internal/game"
 	"github.com/hajimehoshi/ebiten/v2"
-	"tamagotchi/cmd/tamagotchi/component"
-	"tamagotchi/cmd/tamagotchi/engine"
-	"tamagotchi/internal/game"
 )
 
 var Draw = engine.NewSystem(&engine.SystemOptions{

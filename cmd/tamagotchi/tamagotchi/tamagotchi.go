@@ -1,13 +1,13 @@
 package tamagotchi
 
 import (
+	"github.com/cstria0106/tamagotchi/cmd/tamagotchi/cli"
+	"github.com/cstria0106/tamagotchi/cmd/tamagotchi/component"
+	"github.com/cstria0106/tamagotchi/cmd/tamagotchi/engine"
+	"github.com/cstria0106/tamagotchi/cmd/tamagotchi/entity"
+	"github.com/cstria0106/tamagotchi/cmd/tamagotchi/system"
+	"github.com/cstria0106/tamagotchi/internal/game"
 	"github.com/hajimehoshi/ebiten/v2"
-	"tamagotchi/cmd/tamagotchi/cli"
-	"tamagotchi/cmd/tamagotchi/component"
-	"tamagotchi/cmd/tamagotchi/engine"
-	"tamagotchi/cmd/tamagotchi/entity"
-	"tamagotchi/cmd/tamagotchi/system"
-	"tamagotchi/internal/game"
 )
 
 const (

@@ -1,9 +1,9 @@
 package engine
 
 import (
+	"github.com/cstria0106/tamagotchi/cmd/tamagotchi/cli"
+	"github.com/cstria0106/tamagotchi/internal/game"
 	"github.com/hajimehoshi/ebiten/v2"
-	"tamagotchi/cmd/tamagotchi/cli"
-	"tamagotchi/internal/game"
 )
 
 type ScreenOptions struct {

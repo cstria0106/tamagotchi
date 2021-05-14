@@ -1,8 +1,8 @@
 package header
 
 import (
-	"tamagotchi/internal/network/events"
-	"tamagotchi/internal/util"
+	"github.com/cstria0106/tamagotchi/internal/network/events"
+	"github.com/cstria0106/tamagotchi/internal/util"
 )
 
 type Header struct {

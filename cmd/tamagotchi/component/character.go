@@ -1,7 +1,7 @@
 package component
 
 import (
-	"tamagotchi/internal/game"
+	"github.com/cstria0106/tamagotchi/internal/game"
 )
 
 type Character struct {

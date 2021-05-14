@@ -1,9 +1,9 @@
 package serverbuffer
 
 import (
-	"tamagotchi/internal/data/version"
-	"tamagotchi/internal/network/events"
-	"tamagotchi/internal/network/header"
+	"github.com/cstria0106/tamagotchi/internal/data/version"
+	"github.com/cstria0106/tamagotchi/internal/network/events"
+	"github.com/cstria0106/tamagotchi/internal/network/header"
 )
 
 func PongBuffer(version *version.Version) []byte {

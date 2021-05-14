@@ -1,11 +1,11 @@
 package system
 
 import (
+	"github.com/cstria0106/tamagotchi/cmd/tamagotchi/component"
+	"github.com/cstria0106/tamagotchi/cmd/tamagotchi/engine"
+	"github.com/cstria0106/tamagotchi/internal/game"
 	"github.com/gopackage/tween/curves"
 	"golang.org/x/exp/rand"
-	"tamagotchi/cmd/tamagotchi/component"
-	"tamagotchi/cmd/tamagotchi/engine"
-	"tamagotchi/internal/game"
 )
 
 var Character = engine.NewSystem(&engine.SystemOptions{

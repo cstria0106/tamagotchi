@@ -2,7 +2,7 @@ package component
 
 import (
 	"github.com/Tarliton/collision2d"
-	"tamagotchi/internal/game"
+	"github.com/cstria0106/tamagotchi/internal/game"
 )
 
 type MouseEvent struct {

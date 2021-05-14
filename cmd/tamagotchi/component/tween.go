@@ -1,8 +1,8 @@
 package component
 
 import (
+	"github.com/cstria0106/tamagotchi/internal/game"
 	"github.com/gopackage/tween/curves"
-	"tamagotchi/internal/game"
 )
 
 type Tween struct {

@@ -1,10 +1,10 @@
 package system
 
 import (
+	"github.com/cstria0106/tamagotchi/cmd/tamagotchi/engine"
+	"github.com/cstria0106/tamagotchi/internal/game"
 	"github.com/hajimehoshi/ebiten/v2"
 	"image"
-	"tamagotchi/cmd/tamagotchi/engine"
-	"tamagotchi/internal/game"
 )
 
 var Background = engine.NewSystem(&engine.SystemOptions{

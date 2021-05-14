@@ -1,9 +1,9 @@
 package main
 
 import (
+	"github.com/cstria0106/tamagotchi/cmd/tamagotchi_server/gamestate"
+	"github.com/cstria0106/tamagotchi/internal/network/events/buffers/serverbuffer"
 	"sync"
-	"tamagotchi/cmd/tamagotchi_server/gamestate"
-	"tamagotchi/internal/network/events/buffers/serverbuffer"
 	"time"
 )
 

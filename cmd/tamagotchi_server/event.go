@@ -1,11 +1,11 @@
 package main
 
 import (
+	"github.com/cstria0106/tamagotchi/cmd/tamagotchi_server/gamestate"
+	"github.com/cstria0106/tamagotchi/internal/network/events"
+	"github.com/cstria0106/tamagotchi/internal/network/events/buffers/serverbuffer"
+	"github.com/cstria0106/tamagotchi/internal/util"
 	"log"
-	"tamagotchi/cmd/tamagotchi_server/gamestate"
-	"tamagotchi/internal/network/events"
-	"tamagotchi/internal/network/events/buffers/serverbuffer"
-	"tamagotchi/internal/util"
 )
 
 func (s *Server) startHandleEvents(c *Connection) {

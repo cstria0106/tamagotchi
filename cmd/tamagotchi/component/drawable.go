@@ -1,9 +1,9 @@
 package component
 
 import (
+	"github.com/cstria0106/tamagotchi/internal/game"
 	"github.com/hajimehoshi/ebiten/v2"
 	"image/color"
-	"tamagotchi/internal/game"
 )
 
 type Drawable struct {
